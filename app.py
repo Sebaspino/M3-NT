@@ -177,7 +177,6 @@ with st.sidebar:
                                 ["Todos"] + sorted(df_all["Departamento"].unique().tolist()))
     st.markdown("---")
     st.markdown("**📈 Variables a analizar**")
-    st.markdown("<small>Controlan el lollipop, barras por rango, barras por departamento y la serie temporal.</small>", unsafe_allow_html=True)
     var_x = st.selectbox("Variable principal", list(NUMERIC_COLS.keys()), index=0)
     var_y = st.selectbox("Variable secundaria (barras por rango)", list(NUMERIC_COLS.keys()), index=1)
     st.markdown("---")
