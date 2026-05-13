@@ -249,6 +249,50 @@ st.markdown(cards_html, unsafe_allow_html=True)
 st.markdown("<div class='section-title'>Distribución de variables clave</div>",
             unsafe_allow_html=True)
 
+st.markdown(f"**🌾 Cantidad de muestras por cultivo (Top {n_top})**")
+_cult_cnt = (
+    df["Cultivo"].value_counts()
+    .head(n_top)
+    .reset_index()
+    .rename(columns={"Cultivo": "Cultivo", "count": "N"})
+    .sort_values("N", ascending=False)
+)
+
+fig_cult = go.Figure()
+fig_cult.add_trace(go.Bar(
+    x=_cult_cnt["Cultivo"],
+    y=_cult_cnt["N"],
+    marker=dict(
+        color=_cult_cnt["N"],
+        colorscale=[[0, "#95d5b2"], [0.5, "#40916c"], [1, "#1b4332"]],
+        showscale=False,
+        line=dict(color="white", width=1.5),
+    ),
+    text=[f"{int(v):,}" for v in _cult_cnt["N"]],
+    textposition="outside",
+    textfont=dict(size=11, color="#1b4332", family="monospace"),
+    hovertemplate="<b>%{x}</b><br>Muestras: %{y:,}<extra></extra>",
+))
+apply_clean_layout(fig_cult, height=360, extra=dict(
+    showlegend=False,
+    xaxis=dict(
+        title="Cultivo",
+        title_font=dict(color="#1b4332"),
+        tickfont=dict(color="#333333", size=11),
+        tickangle=-35,
+        gridcolor="#e8ede8",
+    ),
+    yaxis=dict(
+        title="N° muestras",
+        title_font=dict(color="#1b4332"),
+        tickfont=dict(color="#333333"),
+        gridcolor="#e8ede8",
+    ),
+    bargap=0.25,
+))
+st.plotly_chart(fig_cult, use_container_width=True)
+st.caption("💡 El slider 'Top N elementos' del panel izquierdo controla cuántos cultivos se muestran.")
+
 # ══════════════════════════════════════════════════════════════════════════════
 # PRÁCTICAS AGRÍCOLAS — Drenaje, Riego, Fertilizantes
 # ══════════════════════════════════════════════════════════════════════════════
@@ -303,46 +347,6 @@ fig_drain.update_layout(
 st.plotly_chart(fig_drain, use_container_width=True)
 st.caption("💡 La mayoría de suelos analizados tienen buen drenaje. Los suelos con mal drenaje son más susceptibles a compactación y pérdida de nutrientes.")
 
-# ── Riego: materia orgánica por sistema ──────────────────────────────────────
-st.markdown("**🚿 Materia orgánica (%) por sistema de riego**")
-_riego_df = df[["Riego", "Materia organica"]].dropna()
-_riego_df["Materia organica"] = pd.to_numeric(_riego_df["Materia organica"], errors="coerce")
-_riego_df = _riego_df.dropna()
-_riego_agg = (
-    _riego_df.groupby("Riego")["Materia organica"]
-    .agg(Mediana="median", Q1=lambda s: s.quantile(0.25),
-         Q3=lambda s: s.quantile(0.75), N="count")
-    .reset_index()
-    .query("N >= 30")
-    .sort_values("Mediana")
-)
-fig_riego = go.Figure()
-for i, row in _riego_agg.iterrows():
-    c = drain_palette[i % len(drain_palette)]
-    fig_riego.add_trace(go.Scatter(
-        x=[row["Q1"], row["Q3"]], y=[row["Riego"], row["Riego"]],
-        mode="lines", line=dict(color=c, width=12), opacity=0.3,
-        showlegend=False, hoverinfo="skip",
-    ))
-    fig_riego.add_trace(go.Scatter(
-        x=[row["Mediana"]], y=[row["Riego"]],
-        mode="markers+text",
-        marker=dict(size=14, color=c, line=dict(color="white", width=2)),
-        text=[f"  {row['Mediana']:.1f}%"],
-        textposition="middle right",
-        textfont=dict(size=10, color="#1b4332"),
-        showlegend=False,
-        hovertemplate=f"<b>{row['Riego']}</b><br>Mediana M.O.: {row['Mediana']:.2f}%<br>N: {int(row['N']):,}<extra></extra>",
-    ))
-apply_clean_layout(fig_riego, height=max(260, len(_riego_agg) * 52), extra=dict(
-    showlegend=False,
-    xaxis=dict(title="Materia Orgánica (%)", title_font=dict(color="#1b4332"),
-               tickfont=dict(color="#333333"), gridcolor="#e8ede8"),
-    yaxis=dict(tickfont=dict(color="#333333", size=11),
-               categoryorder="array", categoryarray=_riego_agg["Riego"].tolist()),
-))
-st.plotly_chart(fig_riego, use_container_width=True)
-st.caption("💡 Los sistemas de riego tecnificado (goteo, aspersión) suelen asociarse a suelos con mayor contenido de materia orgánica por mejor manejo del cultivo.")
 
 # ── Fertilizantes: top tipos más usados ──────────────────────────────────────
 st.markdown("**🌿 Top 12 fertilizantes más aplicados**")
@@ -589,52 +593,10 @@ st.plotly_chart(fig_dep, use_container_width=True)
 st.caption("💡 Se muestra la mediana para reducir el efecto de valores atípicos. El tamaño del punto refleja el número de muestras.")
 
 # ══════════════════════════════════════════════════════════════════════════════
-# FILA 3 — Heatmap (Seaborn)  |  Donut pH (Plotly)
+# FILA 3 — Donut pH (Plotly)
 # ══════════════════════════════════════════════════════════════════════════════
-st.markdown("<div class='section-title'>Correlaciones y categorización del pH</div>",
+st.markdown("<div class='section-title'>Categorización del pH</div>",
             unsafe_allow_html=True)
-
-st.markdown("**🌡️ Correlación entre propiedades del suelo**")
-heat_map = {
-    "pH":        "pH agua:suelo",
-    "Mat. Org.": "Materia organica",
-    "Fósforo":   "Fósforo Bray II",
-    "Azufre":    "Azufre Fosfato monocalcico",
-    "Calcio":    "Calcio intercambiable",
-    "Magnesio":  "Magnesio intercambiable",
-    "Zinc":      "Zinc disponible Olsen",
-    "Boro":      "Boro disponible",
-}
-corr_src = df[list(heat_map.values())].dropna()
-if len(corr_src) > 5000:
-    corr_src = corr_src.sample(5000, random_state=42)
-corr_src.columns = list(heat_map.keys())
-corr = corr_src.corr()
-
-fig_h, ax = plt.subplots(figsize=(5.5, 4.5))
-fig_h.patch.set_facecolor("white")
-ax.set_facecolor("white")
-sns.heatmap(
-    corr, annot=False,
-    cmap=sns.color_palette("YlGn", as_cmap=True),
-    vmin=-1, vmax=1, linewidths=0.5,
-    ax=ax,
-)
-# Añadir anotaciones con color dinámico: blanco en celdas oscuras, verde oscuro en claras
-for i in range(corr.shape[0]):
-    for j in range(corr.shape[1]):
-        val = corr.iloc[i, j]
-        # Umbral: valores > 0.5 o < -0.5 tienen fondo oscuro → texto blanco
-        text_color = "white" if abs(val) > 0.5 else "#1b4332"
-        ax.text(j + 0.5, i + 0.5, f"{val:.2f}",
-                ha="center", va="center",
-                fontsize=8, color=text_color, fontweight="bold")
-ax.tick_params(axis="x", labelsize=8, labelcolor="#333333", rotation=40)
-ax.tick_params(axis="y", labelsize=8, labelcolor="#333333", rotation=0)
-plt.tight_layout(pad=0.5)
-st.pyplot(fig_h, use_container_width=True)
-plt.close()
-st.caption("💡 Verde oscuro = correlación positiva fuerte; valores negativos = relación inversa.")
 
 st.markdown("**🍩 Categorías de acidez del suelo**")
 cat_counts = df["Categoría pH"].value_counts().reset_index()
