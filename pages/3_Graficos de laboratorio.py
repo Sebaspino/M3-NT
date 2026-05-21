@@ -47,16 +47,18 @@ st.markdown("""
         color: #1b4332 !important;
     }
 
-    /* Todo texto visible en el área principal */
-    .stApp p, .stApp span, .stApp label,
-    .stApp div, .stApp li, .stApp small,
+    /* Texto del área principal — selectores precisos, sin .stApp div genérico */
+    .stApp p, .stApp span, .stApp label, .stApp li, .stApp small,
     [data-testid="stMarkdownContainer"] *,
     [data-testid="stCaptionContainer"] *,
-    .stCaption, .stCaption * {
+    [data-testid="stMetricValue"],
+    [data-testid="stMetricLabel"],
+    .stCaption, .stCaption *,
+    h1, h2, h3, h4, h5, h6 {
         color: #222222 !important;
     }
 
-    /* Títulos bold de sección (st.markdown("**...**")) */
+    /* Títulos bold de sección */
     [data-testid="stMarkdownContainer"] strong {
         color: #1b4332 !important;
     }
@@ -65,8 +67,12 @@ st.markdown("""
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #1b4332 0%, #2d6a4f 60%, #40916c 100%) !important;
     }
-    [data-testid="stSidebar"],
-    [data-testid="stSidebar"] * {
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] span,
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] small,
+    [data-testid="stSidebar"] .stMarkdown,
+    [data-testid="stSidebar"] .stMarkdown * {
         color: #d8f3dc !important;
     }
 
@@ -299,7 +305,7 @@ st.caption("💡 El slider 'Top N elementos' del panel izquierdo controla cuánt
 st.markdown("<div class='section-title'>Prácticas agrícolas y su relación con el suelo</div>",
             unsafe_allow_html=True)
 
-drain_palette = ["#1b4332","#2d6a4f","#40916c","#52b788","#74c69d","#95d5b2"]
+drain_palette = GREENS[:6]
 
 # ── Drenaje: distribución de muestras por tipo ───────────────────────────────
 st.markdown("**💧 Distribución de muestras por tipo de drenaje**")
@@ -311,13 +317,12 @@ _drain_cnt = (
     .sort_values("N", ascending=False)
 )
 _drain_cnt["Porcentaje"] = (_drain_cnt["N"] / _drain_cnt["N"].sum() * 100).round(1)
-_drain_colors = ["#1b4332", "#2d6a4f", "#40916c", "#52b788", "#74c69d", "#95d5b2"]
 fig_drain = go.Figure(go.Pie(
     labels=_drain_cnt["Tipo"],
     values=_drain_cnt["N"],
     hole=0.55,
     marker=dict(
-        colors=[_drain_colors[i % len(_drain_colors)] for i in range(len(_drain_cnt))],
+        colors=[drain_palette[i % len(drain_palette)] for i in range(len(_drain_cnt))],
         line=dict(color="white", width=3),
     ),
     textinfo="percent",
@@ -496,7 +501,7 @@ try:
         y=range_agg["Media"],
         mode="lines+markers+text",
         fill="tozeroy",
-        fillcolor="rgba(82,183,136,0.18)",
+        fillcolor="rgba(64,145,108,0.18)",
         line=dict(color="#2d6a4f", width=2.5, shape="spline"),
         marker=dict(
             size=12,
@@ -654,7 +659,7 @@ if len(ts_agg) >= 3:
     fig_ts.add_trace(go.Scatter(
         x=ts_agg["Año"].tolist() + ts_agg["Año"].tolist()[::-1],
         y=ts_agg["upper"].tolist() + ts_agg["lower"].tolist()[::-1],
-        fill="toself", fillcolor="rgba(82,183,136,0.15)",
+        fill="toself", fillcolor="rgba(64,145,108,0.15)",
         line=dict(color="rgba(0,0,0,0)"),
         name="±1 Desv. Est.", hoverinfo="skip",
     ))
@@ -696,28 +701,6 @@ if len(ts_agg) >= 3:
     st.caption("💡 Banda verde = variabilidad ±1 desviación estándar. Línea sólida = mediana anual.")
 else:
     st.info("No hay suficientes datos anuales para mostrar la serie temporal con el filtro actual.")
-
-# ══════════════════════════════════════════════════════════════════════════════
-# FILA 5 — Tabla estadística
-# ══════════════════════════════════════════════════════════════════════════════
-st.markdown("<div class='section-title'>Resumen estadístico</div>",
-            unsafe_allow_html=True)
-st.markdown("**📋 Estadísticas descriptivas por variable fisicoquímica**")
-
-stat_df = (
-    df[list(NUMERIC_COLS.values())]
-    .describe(percentiles=[.25, .5, .75])
-    .T
-    .rename(columns={"count":"N muestras","mean":"Media","std":"Desv. Est.",
-                     "min":"Mínimo","25%":"Q1","50%":"Mediana","75%":"Q3","max":"Máximo"})
-)
-stat_df.index = list(NUMERIC_COLS.keys())
-stat_df["N muestras"] = stat_df["N muestras"].apply(
-    lambda x: f"{int(x):,}" if pd.notna(x) else "–")
-for col in ["Media","Desv. Est.","Mínimo","Q1","Mediana","Q3","Máximo"]:
-    stat_df[col] = stat_df[col].apply(lambda x: f"{x:.3f}" if pd.notna(x) else "–")
-
-st.dataframe(stat_df, use_container_width=True, height=430)
 
 # ── FOOTER ────────────────────────────────────────────────────────────────────
 st.markdown("""
