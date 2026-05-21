@@ -122,6 +122,26 @@ with st.expander("💡 ¿Cómo interpretar este paso? — Contexto Suelos"):
     """)
 
 # ─────────────────────────────────────────────────────────────────
+# PASO 1.5 — Filtrado con .loc[] (Pandas Pro)
+# ─────────────────────────────────────────────────────────────────
+st.subheader("🔬 Muestra filtrada con `.loc[]`: suelos ácidos con cacao")
+st.caption("Uso de `.loc[]` para seleccionar filas que cumplen una condición y columnas específicas.")
+
+acidos_cacao = df.loc[
+    (df["pH agua:suelo"] < 5.5) & (df["Cultivo"] == "Cacao"),
+    ["Departamento", "Municipio", "Cultivo", "pH agua:suelo", "Materia organica", "Calcio intercambiable"]
+].dropna().head(10)
+
+if not acidos_cacao.empty:
+    st.dataframe(acidos_cacao.reset_index(drop=True), use_container_width=True)
+    st.caption(
+        f"Se encontraron muestras de cacao en suelos ácidos (pH < 5.5) usando "
+        f"`df.loc[(df['pH agua:suelo'] < 5.5) & (df['Cultivo'] == 'Cacao'), columnas]`."
+    )
+else:
+    st.info("No hay registros de Cacao con pH < 5.5 en el filtro actual.")
+
+# ─────────────────────────────────────────────────────────────────
 # PASO 2 — La Estructura
 # ─────────────────────────────────────────────────────────────────
 st.header("Step 2: 🏗️ La Estructura")

@@ -38,32 +38,10 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── CSS ───────────────────────────────────────────────────────────────────────
+# ── CSS — sidebar + KPI cards (coherente con todas las páginas de suelos) ──────
 st.markdown("""
 <style>
-    /* ── Forzar tema claro en TODO el app ── */
-    .stApp {
-        background-color: #f4f6f1 !important;
-        color: #1b4332 !important;
-    }
-
-    /* Texto del área principal — selectores precisos, sin .stApp div genérico */
-    .stApp p, .stApp span, .stApp label, .stApp li, .stApp small,
-    [data-testid="stMarkdownContainer"] *,
-    [data-testid="stCaptionContainer"] *,
-    [data-testid="stMetricValue"],
-    [data-testid="stMetricLabel"],
-    .stCaption, .stCaption *,
-    h1, h2, h3, h4, h5, h6 {
-        color: #222222 !important;
-    }
-
-    /* Títulos bold de sección */
-    [data-testid="stMarkdownContainer"] strong {
-        color: #1b4332 !important;
-    }
-
-    /* Sidebar: mantener texto claro */
+    .stApp { background-color: #f4f6f1 !important; color: #1b4332 !important; }
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #1b4332 0%, #2d6a4f 60%, #40916c 100%) !important;
     }
@@ -72,14 +50,9 @@ st.markdown("""
     [data-testid="stSidebar"] label,
     [data-testid="stSidebar"] small,
     [data-testid="stSidebar"] .stMarkdown,
-    [data-testid="stSidebar"] .stMarkdown * {
-        color: #d8f3dc !important;
-    }
-
-    /* Selectboxes y sliders del sidebar */
+    [data-testid="stSidebar"] .stMarkdown * { color: #d8f3dc !important; }
     [data-testid="stSidebar"] .stSelectbox > div,
-    [data-testid="stSidebar"] .stSlider     { color: #d8f3dc !important; }
-
+    [data-testid="stSidebar"] .stSlider { color: #d8f3dc !important; }
     /* KPI cards */
     .kpi-row  { display:flex; gap:10px; margin-bottom:18px; }
     .kpi-card {
@@ -99,12 +72,6 @@ st.markdown("""
         border-left:4px solid #40916c; padding-left:10px;
         margin:18px 0 10px 0;
     }
-
-    /* Iframes Plotly siempre en blanco */
-    iframe { background: white !important; }
-
-    /* Tabla dataframe */
-    [data-testid="stDataFrame"] * { color: #222222 !important; }
 </style>
 """, unsafe_allow_html=True)
 
